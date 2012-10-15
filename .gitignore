@@ -1,6 +1,10 @@
 *.class
+<<<<<<< HEAD
 
 # Package Files #
 *.jar
 *.war
 *.ear
+=======
+*.sw[op]
+>>>>>>> Added input test files
