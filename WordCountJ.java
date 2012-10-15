@@ -20,7 +20,7 @@ public class WordCountJ implements Runnable {
    }
 
    public synchronized void wordCount() {
-      String pattern = "\\w+([-']\\w+)?";
+      String pattern = "[a-z]+(-{1,2}[a-z]+('[a-z]+)?|'[a-z]+)?";
       Pattern regex = Pattern.compile(pattern);
 
       while (sc.hasNext()) {
@@ -57,6 +57,23 @@ public class WordCountJ implements Runnable {
       }
    }
 
+   public static void runConcurrently(Thread[] threads) {
+      int completed = 0;
+
+      for (Thread thread : threads)
+         thread.start();
+
+      int i = 0;
+      while (completed < threads.length) {
+         if (threads[i].getState() == Thread.State.TERMINATED) {
+            completed++;
+            i++;
+         }
+         if (i == threads.length)
+            i = 0;
+      }
+   }
+
    public static void main(String[] args) {
       int numberOfThreads = 4;
       String[] filenames;
@@ -65,18 +82,21 @@ public class WordCountJ implements Runnable {
       for (int i = 0; i < args.length; i++) {
          Runnable r = new WordCountJ(args[i]);
          threads[i] = new Thread(r);
-         threads[i].start();
       }
 
-      int completed = 0;
-      while (completed < threads.length) {
-         for (int i = 0; i < threads.length; i++) {
-            //System.out.println("Thead state " + threads[i].getState() + "\n");
-            if (threads[i].getState() == Thread.State.TERMINATED)
-               completed++;
+      int i = 0;
+      int runnableThreads = threads.length;
+      while (runnableThreads > 0) {
+         if (runnableThreads/numberOfThreads > 0) {
+            runConcurrently(Arrays.copyOfRange(threads, i, i + numberOfThreads));
+            i += numberOfThreads;
+            runnableThreads -= numberOfThreads;
+         }
+         else {
+            runConcurrently(Arrays.copyOfRange(threads, i, i + runnableThreads));
+            runnableThreads = 0; 
          }
       }
-
       writeResults();
    }
 }
